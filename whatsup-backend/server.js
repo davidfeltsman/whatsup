@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import Messages from './dbMessages.js';
 import Pusher from 'pusher';
+import cors from 'cors';
+
 //app config
 const app = express();
 const PORT = process.env.PORT || 9000
@@ -16,6 +18,8 @@ const pusher = new Pusher({
 
 //middleware
 app.use(express.json());
+app.use(cors());
+
 //DB conf
 const CONNECTION_URL = 'mongodb+srv://david:851641@cluster0.yqgnv.mongodb.net/whatsupdb?retryWrites=true&w=majority'
 
@@ -30,11 +34,22 @@ const DB = mongoose.connection;
 DB.once('open', () => {
   console.log('DB connected');
 
-  const msgCollection = DB.collection('messagecontent');
+  const msgCollection = DB.collection('messagecontents');
   const changeStream = msgCollection.watch();
 
   changeStream.on('change', (change) => {
-    console.log(change)
+    console.log('A change occured', change)
+    if (change.operationType === 'insert') {
+      const messageDetails = change.fullDocument;
+      pusher.trigger('messages', 'inserted', {
+        name: messageDetails.name,
+        message: messageDetails.message,
+        timestamp: messageDetails.timestamp,
+        received: messageDetails.received,
+      });
+    } else {
+      console.log('Error triggering Pusher');
+    }
   })
 })
 //
