@@ -3,10 +3,11 @@
 
 # dependencies
 /whatsup/node_modules
+/whatsup-backend/node_modules
 /.pnp
 .pnp.js
 .vscode
-
+/whatsup-backend/.eslintrc.json
 # testing
 /whatsup/coverage
 
